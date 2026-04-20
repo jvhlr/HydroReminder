@@ -17,8 +17,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#0A0E1A"
       },
-      "package": "com.hydro.reminder",
-      "useNextNotificationsApi": true
+      "package": "com.hydro.reminder"
     },
     "plugins": [
       [
