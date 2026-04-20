@@ -34,6 +34,12 @@
         "projectId": "59efa846-21f0-4a9e-9b4c-1efa722b7510"
       }
     },
-    "owner": "jebiii"
+    "owner": "jebiii",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/59efa846-21f0-4a9e-9b4c-1efa722b7510"
+    }
   }
 }
