@@ -14,6 +14,7 @@
     "expo": "^54.0.0",
     "expo-asset": "~12.0.12",
     "expo-constants": "~18.0.13",
+    "expo-dev-client": "~6.0.20",
     "expo-device": "~8.0.10",
     "expo-notifications": "~0.32.16",
     "expo-updates": "~29.0.16",
