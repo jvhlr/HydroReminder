@@ -1,18 +1,27 @@
 /**
  * Timer.js
  * --------
- * Displays a circular countdown timer with a progress ring.
- * Shows mm:ss remaining until the next reminder.
+ * Displays the countdown as a glass that fills up while you wait
+ * for your next sip. Shows mm:ss remaining until the next reminder.
  *
  * Props:
  *   @param {number}  secondsLeft   – Seconds remaining in the countdown.
- *   @param {number}  totalSeconds  – Total seconds for the full interval (used for ring progress).
+ *   @param {number}  totalSeconds  – Total seconds for the full interval.
  *   @param {boolean} isActive      – Whether the timer is currently running.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+
+const COLORS = {
+  bg: '#0C1D15',
+  surface: '#14261E',
+  border: '#234034',
+  accent: '#2FA89C',
+  text: '#F5F0E8',
+  muted: '#8A9B94',
+  dim: '#5C6F66',
+};
 
 export default function Timer({ secondsLeft, totalSeconds, isActive }) {
   // ── Format seconds into MM:SS ──
@@ -20,64 +29,36 @@ export default function Timer({ secondsLeft, totalSeconds, isActive }) {
   const seconds = secondsLeft % 60;
   const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-  // ── Progress percentage (1 = full, 0 = complete) ──
-  const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
-
-  // ── SVG ring dimensions ──
-  const size = 220;
-  const strokeWidth = 6;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
+  // Fraction of the interval that has elapsed (0 = just started, 1 = reminder due).
+  // The glass fills up as the next sip approaches.
+  const elapsed = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+  const fillPct = Math.max(0, Math.min(1, elapsed));
 
   return (
     <View style={styles.container}>
-      {/* Outer glow */}
-      <View style={[styles.glowRing, isActive && styles.glowRingActive]}>
+      <Text
+        style={[styles.time, isActive ? styles.timeActive : styles.timePaused]}
+        accessibilityLabel={`Timer, ${display} until your next sip`}
+      >
+        {display}
+      </Text>
+      <Text style={styles.label}>
+        {isActive ? 'until your next sip' : 'paused'}
+      </Text>
 
-        {/* SVG ring + centered content */}
-        <View style={{ width: size, height: size }}>
-          <Svg width={size} height={size}>
-            {/* Track circle */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke="#1E293B"
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-            {/* Progress arc — drains clockwise from 12 o'clock */}
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              stroke={isActive ? '#38BDF8' : '#1E293B'}
-              strokeWidth={strokeWidth}
-              fill="none"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              rotation={-90}
-              originX={size / 2}
-              originY={size / 2}
-            />
-          </Svg>
-
-          {/* MM:SS and label centered over the ring */}
-          <View style={styles.innerCircle}>
-            <Text style={[styles.time, isActive && styles.timeActive]}>
-              {display}
-            </Text>
-            <Text style={styles.label}>
-              {isActive ? 'until next reminder' : 'paused'}
-            </Text>
-          </View>
-        </View>
+      {/* The glass */}
+      <View style={styles.glass}>
+        <View
+          style={[
+            styles.fill,
+            { height: `${fillPct * 100}%` },
+            isActive ? styles.fillActive : styles.fillPaused,
+          ]}
+        />
       </View>
 
-      {/* Status badge below the timer */}
-      <View style={[styles.statusBadge, isActive ? styles.statusActive : styles.statusStopped]}>
+      {/* Status line (plain text, no pill badge) */}
+      <View style={styles.statusRow}>
         <View style={[styles.statusDot, isActive ? styles.dotActive : styles.dotStopped]} />
         <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextStopped]}>
           {isActive ? 'Running' : 'Stopped'}
@@ -93,67 +74,57 @@ const styles = StyleSheet.create({
     marginVertical: 24,
   },
 
-  // Outer glow effect
-  glowRing: {
-    borderRadius: 130,
-    padding: 10,
-  },
-  glowRingActive: {
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 30,
-    elevation: 12,
-  },
-
-  // MM:SS + label — absolutely centered over the SVG
-  innerCircle: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // Countdown digits
   time: {
     fontSize: 52,
-    fontWeight: '200',
-    color: '#475569',
+    fontWeight: '300',
     fontVariant: ['tabular-nums'],
-    letterSpacing: 4,
+    letterSpacing: 1,
   },
   timeActive: {
-    color: '#F1F5F9',
+    color: COLORS.text,
+  },
+  timePaused: {
+    color: COLORS.muted,
   },
   label: {
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: 13,
+    color: COLORS.muted,
     marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 0.5,
   },
 
-  // Status badge
-  statusBadge: {
+  // The glass
+  glass: {
+    width: 150,
+    height: 190,
+    marginTop: 20,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    backgroundColor: COLORS.surface,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  fill: {
+    width: '100%',
+  },
+  fillActive: {
+    backgroundColor: COLORS.accent,
+  },
+  fillPaused: {
+    backgroundColor: COLORS.dim,
+  },
+
+  // Status line
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
   },
-  statusActive: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
-    borderColor: 'rgba(56, 189, 248, 0.25)',
-  },
-  statusStopped: {
-    backgroundColor: 'rgba(100, 116, 139, 0.08)',
-    borderColor: 'rgba(100, 116, 139, 0.25)',
-  },
-
-  // Status dot
   statusDot: {
     width: 8,
     height: 8,
@@ -161,23 +132,20 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dotActive: {
-    backgroundColor: '#38BDF8',
+    backgroundColor: COLORS.accent,
   },
   dotStopped: {
-    backgroundColor: '#64748B',
+    backgroundColor: COLORS.dim,
   },
-
-  // Status text
   statusText: {
     fontSize: 13,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 0.3,
   },
   statusTextActive: {
-    color: '#38BDF8',
+    color: COLORS.accent,
   },
   statusTextStopped: {
-    color: '#64748B',
+    color: COLORS.muted,
   },
 });
