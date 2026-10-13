@@ -1,4 +1,3 @@
-
 /**
  * App.js
  * ------
@@ -8,6 +7,7 @@
  *  - Loading saved interval / state from AsyncStorage
  *  - Managing the countdown timer via useEffect
  *  - Starting / stopping scheduled notifications
+ *  - Tracking glasses of water logged today
  *  - Rendering the Timer and Controls components
  */
 
@@ -33,6 +33,8 @@ import {
   loadInterval,
   saveActiveState,
   loadActiveState,
+  saveGlassesToday,
+  loadGlassesToday,
 } from './src/services/StorageHelper';
 
 // Components
@@ -42,6 +44,16 @@ import Controls from './src/components/Controls';
 // ── Default interval: 60 minutes ──
 const DEFAULT_INTERVAL = 60;
 
+const COLORS = {
+  bg: '#0C1D15',
+  surface: '#14261E',
+  border: '#234034',
+  accent: '#2FA89C',
+  text: '#F5F0E8',
+  muted: '#8A9B94',
+  dim: '#5C6F66',
+};
+
 export default function App() {
   // ─── State ────────────────────────────────────────────
   const [interval, setInterval_] = useState(DEFAULT_INTERVAL);  // in minutes
@@ -49,6 +61,7 @@ export default function App() {
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_INTERVAL * 60);
   const [customValue, setCustomValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [glassesToday, setGlassesToday] = useState(0);
 
   // Ref to hold the countdown interval ID so we can clear it
   const countdownRef = useRef(null);
@@ -58,6 +71,8 @@ export default function App() {
     (async () => {
       const savedInterval = await loadInterval();
       const savedActive = await loadActiveState();
+      const savedGlasses = await loadGlassesToday();
+      setGlassesToday(savedGlasses);
 
       if (savedInterval && savedInterval > 0) {
         setInterval_(savedInterval);
@@ -181,12 +196,21 @@ export default function App() {
     setCustomValue('');
   }, [customValue, handleSelectInterval]);
 
+  /** Log a glass of water drunk today */
+  const handleLogGlass = useCallback(() => {
+    setGlassesToday((prev) => {
+      const next = prev + 1;
+      saveGlassesToday(next);
+      return next;
+    });
+  }, []);
+
   // ─── Loading screen ───────────────────────────────────
   if (isLoading) {
     return (
       <View style={styles.loadingScreen}>
-        <StatusBar barStyle="light-content" backgroundColor="#0A0E1A" />
-        <Text style={styles.loadingEmoji}>💧</Text>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
+        <View style={styles.loadingDroplet} />
         <Text style={styles.loadingText}>HydroReminder</Text>
       </View>
     );
@@ -195,7 +219,7 @@ export default function App() {
   // ─── Main render ──────────────────────────────────────
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0E1A" />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -204,10 +228,10 @@ export default function App() {
       >
         {/* ── Header ── */}
         <View style={styles.header}>
-          <Text style={styles.headerEmoji}>💧</Text>
+          <View style={styles.dropletMark} />
           <View>
             <Text style={styles.headerTitle}>HydroReminder</Text>
-            <Text style={styles.headerSubtitle}>Stay hydrated, stay healthy</Text>
+            <Text style={styles.headerSubtitle}>Drink water on time</Text>
           </View>
         </View>
 
@@ -231,11 +255,13 @@ export default function App() {
           customValue={customValue}
           onCustomChange={handleCustomChange}
           onCustomSubmit={handleCustomSubmit}
+          glassesToday={glassesToday}
+          onLogGlass={handleLogGlass}
         />
 
         {/* ── Footer ── */}
         <Text style={styles.footer}>
-          Notifications will fire even when the app is backgrounded.
+          Reminders still come through if you close the app.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -246,11 +272,21 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0A0E1A',
+    backgroundColor: COLORS.bg,
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
+  },
+
+  // ── Droplet mark (teardrop: rounded square, sharp top-left corner, rotated 45°) ──
+  dropletMark: {
+    width: 26,
+    height: 26,
+    backgroundColor: COLORS.accent,
+    borderRadius: 13,
+    borderTopLeftRadius: 0,
+    transform: [{ rotate: '45deg' }],
   },
 
   // ── Header ──
@@ -262,25 +298,22 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 14,
   },
-  headerEmoji: {
-    fontSize: 32,
-  },
   headerTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#F1F5F9',
+    color: COLORS.text,
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: COLORS.muted,
     marginTop: 2,
   },
 
   // ── Divider ──
   divider: {
     height: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     marginHorizontal: 24,
     marginBottom: 8,
   },
@@ -289,7 +322,7 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 11,
-    color: '#64748B',
+    color: COLORS.dim,
     marginTop: 24,
     paddingHorizontal: 24,
   },
@@ -297,18 +330,23 @@ const styles = StyleSheet.create({
   // ── Loading ──
   loadingScreen: {
     flex: 1,
-    backgroundColor: '#0A0E1A',
+    backgroundColor: COLORS.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
+  loadingDroplet: {
+    width: 44,
+    height: 44,
+    backgroundColor: COLORS.accent,
+    borderRadius: 22,
+    borderTopLeftRadius: 0,
+    transform: [{ rotate: '45deg' }],
+    marginBottom: 16,
   },
   loadingText: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#38BDF8',
-    letterSpacing: 1,
+    color: COLORS.accent,
+    letterSpacing: 0.5,
   },
 });
