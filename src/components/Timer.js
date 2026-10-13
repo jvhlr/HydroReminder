@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 export default function Timer({ secondsLeft, totalSeconds, isActive }) {
   // ── Format seconds into MM:SS ──
@@ -22,7 +23,7 @@ export default function Timer({ secondsLeft, totalSeconds, isActive }) {
   // ── Progress percentage (1 = full, 0 = complete) ──
   const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
 
-  // Circle dimensions for the SVG-like ring
+  // ── SVG ring dimensions ──
   const size = 220;
   const strokeWidth = 6;
   const radius = (size - strokeWidth) / 2;
@@ -34,10 +35,36 @@ export default function Timer({ secondsLeft, totalSeconds, isActive }) {
       {/* Outer glow */}
       <View style={[styles.glowRing, isActive && styles.glowRingActive]}>
 
-        {/* Background track ring */}
-        <View style={[styles.ring, { width: size, height: size, borderRadius: size / 2 }]}>
+        {/* SVG ring + centered content */}
+        <View style={{ width: size, height: size }}>
+          <Svg width={size} height={size}>
+            {/* Track circle */}
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="#1E293B"
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            {/* Progress arc — drains clockwise from 12 o'clock */}
+            <Circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={isActive ? '#38BDF8' : '#1E293B'}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              rotation={-90}
+              originX={size / 2}
+              originY={size / 2}
+            />
+          </Svg>
 
-          {/* The timer content */}
+          {/* MM:SS and label centered over the ring */}
           <View style={styles.innerCircle}>
             <Text style={[styles.time, isActive && styles.timeActive]}>
               {display}
@@ -46,22 +73,6 @@ export default function Timer({ secondsLeft, totalSeconds, isActive }) {
               {isActive ? 'until next reminder' : 'paused'}
             </Text>
           </View>
-
-          {/* Decorative rotating dash border (progress indication) */}
-          <View
-            style={[
-              styles.progressOverlay,
-              {
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                borderColor: isActive ? '#38BDF8' : '#1E293B',
-                borderWidth: strokeWidth,
-                // Use opacity to simulate progress
-                opacity: isActive ? 0.15 + progress * 0.85 : 0.2,
-              },
-            ]}
-          />
         </View>
       </View>
 
@@ -95,16 +106,13 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
 
-  // The circle track
-  ring: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#1E293B',
-  },
-
-  // Inner content
+  // MM:SS + label — absolutely centered over the SVG
   innerCircle: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -124,11 +132,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 2,
-  },
-
-  // SVG-like progress overlay
-  progressOverlay: {
-    position: 'absolute',
   },
 
   // Status badge

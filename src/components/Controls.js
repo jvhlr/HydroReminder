@@ -61,11 +61,13 @@ export default function Controls({
               style={[
                 styles.presetButton,
                 isSelected && styles.presetSelected,
-                isActive && styles.presetDisabled,
+                isActive && !isSelected && styles.presetDisabled,
               ]}
               onPress={() => onSelectInterval(preset.value)}
               disabled={isActive}
               activeOpacity={0.7}
+              accessibilityLabel={`Set interval to ${preset.label}`}
+              accessibilityRole="button"
             >
               <Text
                 style={[
@@ -94,12 +96,15 @@ export default function Controls({
           onSubmitEditing={onCustomSubmit}
           editable={!isActive}
           maxLength={4}
+          accessibilityLabel="Custom interval in minutes"
         />
         <TouchableOpacity
           style={[styles.customButton, isActive && styles.customButtonDisabled]}
           onPress={onCustomSubmit}
           disabled={isActive}
           activeOpacity={0.7}
+          accessibilityLabel="Set custom interval"
+          accessibilityRole="button"
         >
           <Text style={[styles.customButtonText, isActive && styles.customButtonTextDisabled]}>
             Set
@@ -124,6 +129,8 @@ export default function Controls({
             style={styles.startButton}
             onPress={onStart}
             activeOpacity={0.8}
+            accessibilityLabel="Start Reminder"
+            accessibilityRole="button"
           >
             <Text style={styles.startText}>Start Reminder</Text>
           </TouchableOpacity>
@@ -132,6 +139,8 @@ export default function Controls({
             style={styles.stopButton}
             onPress={onStop}
             activeOpacity={0.8}
+            accessibilityLabel="Stop Reminder"
+            accessibilityRole="button"
           >
             <Text style={styles.stopText}>Stop Reminder</Text>
           </TouchableOpacity>
@@ -178,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(56, 189, 248, 0.08)',
   },
   presetDisabled: {
-    opacity: 0.5,
+    opacity: 0.7,
   },
   presetText: {
     fontSize: 14,
@@ -189,7 +198,7 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
   },
   presetTextDisabled: {
-    color: '#334155',
+    color: '#64748B',
   },
 
   // ── Custom Input ──

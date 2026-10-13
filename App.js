@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 11,
-    color: '#334155',
+    color: '#64748B',
     marginTop: 24,
     paddingHorizontal: 24,
   },
