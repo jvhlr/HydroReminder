@@ -59,7 +59,7 @@ export async function requestPermissions() {
       name: 'Hydration Reminders',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#38BDF8',
+      lightColor: '#2FA89C',
       sound: 'default',
     });
   }
@@ -74,6 +74,10 @@ export async function requestPermissions() {
  * (minute, hour, day, etc.), we schedule a one-shot notification
  * and re-schedule it each time it fires — giving us full control
  * over custom intervals.
+ *
+ * The notification is sticky (Android): it cannot be swiped away
+ * and stays in the notification bar until the user taps it.
+ * Tapping opens the app and clears that notification.
  *
  * @param {number} intervalMinutes – Interval in minutes.
  * @returns {string|null} The notification identifier, or null on failure.
@@ -91,11 +95,14 @@ export async function scheduleReminder(intervalMinutes) {
 
   const id = await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'HydroReminder 💧',
-      body: 'Time to drink water 💧',
+      title: 'HydroReminder',
+      body: 'Time to drink water',
       sound: 'default',
       priority: Notifications.AndroidNotificationPriority.HIGH,
-      ...(Platform.OS === 'android' && { channelId: 'hydro-reminders' }),
+      ...(Platform.OS === 'android' && {
+        channelId: 'hydro-reminders',
+        sticky: true,
+      }),
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
