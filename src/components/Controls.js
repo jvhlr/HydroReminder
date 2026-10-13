@@ -2,7 +2,7 @@
  * Controls.js
  * ------------
  * Renders the interval-selection buttons, custom interval input,
- * and Start / Stop action buttons.
+ * glasses-today tracker, and Start / Stop action buttons.
  *
  * Props:
  *   @param {number}   selectedInterval   – Currently selected interval in minutes.
@@ -13,6 +13,8 @@
  *   @param {string}   customValue        – Current value of the custom input field.
  *   @param {function} onCustomChange     – Callback when custom input text changes.
  *   @param {function} onCustomSubmit     – Callback when custom interval is submitted.
+ *   @param {number}   glassesToday       – Glasses of water logged today.
+ *   @param {function} onLogGlass         – Callback when "Log a glass" is tapped.
  */
 
 import React from 'react';
@@ -25,6 +27,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+
+const COLORS = {
+  bg: '#0C1D15',
+  surface: '#14261E',
+  border: '#234034',
+  accent: '#2FA89C',
+  text: '#F5F0E8',
+  muted: '#8A9B94',
+  dim: '#5C6F66',
+  danger: '#E0654F',
+};
 
 // Preset intervals in minutes
 const PRESETS = [
@@ -42,6 +55,8 @@ export default function Controls({
   customValue,
   onCustomChange,
   onCustomSubmit,
+  glassesToday,
+  onLogGlass,
 }) {
   return (
     <KeyboardAvoidingView
@@ -49,7 +64,7 @@ export default function Controls({
       style={styles.container}
     >
       {/* ── Section Label ── */}
-      <Text style={styles.sectionLabel}>Interval</Text>
+      <Text style={styles.sectionLabel}>Remind me every</Text>
 
       {/* ── Preset Buttons ── */}
       <View style={styles.presetsRow}>
@@ -61,19 +76,20 @@ export default function Controls({
               style={[
                 styles.presetButton,
                 isSelected && styles.presetSelected,
-                isActive && !isSelected && styles.presetDisabled,
+                isActive && !isSelected && styles.presetDimmed,
               ]}
               onPress={() => onSelectInterval(preset.value)}
               disabled={isActive}
               activeOpacity={0.7}
-              accessibilityLabel={`Set interval to ${preset.label}`}
               accessibilityRole="button"
+              accessibilityLabel={`Set interval to ${preset.label}`}
+              accessibilityState={{ selected: isSelected, disabled: isActive }}
             >
               <Text
                 style={[
                   styles.presetText,
                   isSelected && styles.presetTextSelected,
-                  isActive && !isSelected && styles.presetTextDisabled,
+                  isActive && !isSelected && styles.presetTextDimmed,
                 ]}
               >
                 {preset.label}
@@ -87,8 +103,8 @@ export default function Controls({
       <View style={styles.customRow}>
         <TextInput
           style={[styles.customInput, isActive && styles.inputDisabled]}
-          placeholder="Custom (min)"
-          placeholderTextColor="#475569"
+          placeholder="Custom minutes"
+          placeholderTextColor={COLORS.dim}
           keyboardType="number-pad"
           returnKeyType="done"
           value={customValue}
@@ -103,8 +119,8 @@ export default function Controls({
           onPress={onCustomSubmit}
           disabled={isActive}
           activeOpacity={0.7}
-          accessibilityLabel="Set custom interval"
           accessibilityRole="button"
+          accessibilityLabel="Set custom interval"
         >
           <Text style={[styles.customButtonText, isActive && styles.customButtonTextDisabled]}>
             Set
@@ -129,22 +145,39 @@ export default function Controls({
             style={styles.startButton}
             onPress={onStart}
             activeOpacity={0.8}
-            accessibilityLabel="Start Reminder"
             accessibilityRole="button"
+            accessibilityLabel="Start reminders"
           >
-            <Text style={styles.startText}>Start Reminder</Text>
+            <Text style={styles.startText}>Start reminders</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.stopButton}
             onPress={onStop}
             activeOpacity={0.8}
-            accessibilityLabel="Stop Reminder"
             accessibilityRole="button"
+            accessibilityLabel="Stop reminders"
           >
-            <Text style={styles.stopText}>Stop Reminder</Text>
+            <Text style={styles.stopText}>Stop reminders</Text>
           </TouchableOpacity>
         )}
+      </View>
+
+      {/* ── Glasses Today ── */}
+      <View style={styles.glassesRow}>
+        <View>
+          <Text style={styles.glassesLabel}>Glasses today</Text>
+          <Text style={styles.glassesCount}>{glassesToday}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logButton}
+          onPress={onLogGlass}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Log a glass of water"
+        >
+          <Text style={styles.logButtonText}>Log a glass</Text>
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -158,11 +191,10 @@ const styles = StyleSheet.create({
 
   // Section label
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.muted,
+    letterSpacing: 0.3,
     marginBottom: 12,
   },
 
@@ -178,27 +210,28 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1E293B',
-    backgroundColor: '#0F172A',
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
     alignItems: 'center',
   },
   presetSelected: {
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderColor: COLORS.accent,
+    backgroundColor: 'rgba(47, 168, 156, 0.1)',
   },
-  presetDisabled: {
-    opacity: 0.7,
+  // Only unselected presets dim while running; the selected one stays readable.
+  presetDimmed: {
+    opacity: 0.65,
   },
   presetText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: COLORS.muted,
   },
   presetTextSelected: {
-    color: '#38BDF8',
+    color: COLORS.accent,
   },
-  presetTextDisabled: {
-    color: '#64748B',
+  presetTextDimmed: {
+    color: COLORS.dim,
   },
 
   // ── Custom Input ──
@@ -211,12 +244,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderWidth: 1.5,
-    borderColor: '#1E293B',
+    borderColor: COLORS.border,
     borderRadius: 14,
     paddingHorizontal: 16,
     fontSize: 14,
-    color: '#F1F5F9',
-    backgroundColor: '#0F172A',
+    color: COLORS.text,
+    backgroundColor: COLORS.surface,
   },
   inputDisabled: {
     opacity: 0.4,
@@ -226,21 +259,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#38BDF8',
+    borderColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   customButtonDisabled: {
-    borderColor: '#1E293B',
+    borderColor: COLORS.border,
     opacity: 0.4,
   },
   customButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#38BDF8',
+    color: COLORS.accent,
   },
   customButtonTextDisabled: {
-    color: '#334155',
+    color: COLORS.dim,
   },
 
   // ── Current Interval ──
@@ -251,19 +284,19 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 14,
-    backgroundColor: 'rgba(56, 189, 248, 0.04)',
+    backgroundColor: 'rgba(47, 168, 156, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.1)',
+    borderColor: 'rgba(47, 168, 156, 0.12)',
     marginBottom: 28,
   },
   currentLabel: {
     fontSize: 13,
-    color: '#64748B',
+    color: COLORS.muted,
   },
   currentValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#38BDF8',
+    color: COLORS.accent,
   },
 
   // ── Action Buttons ──
@@ -274,33 +307,62 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: '#38BDF8',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
+    backgroundColor: COLORS.accent,
   },
   startText: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#0A0E1A',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+    fontWeight: '700',
+    color: COLORS.bg,
+    letterSpacing: 0.5,
   },
   stopButton: {
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#EF4444',
-    backgroundColor: 'rgba(239, 68, 68, 0.06)',
+    borderColor: COLORS.danger,
+    backgroundColor: 'rgba(224, 101, 79, 0.06)',
   },
   stopText: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#EF4444',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
+    fontWeight: '700',
+    color: COLORS.danger,
+    letterSpacing: 0.5,
+  },
+
+  // ── Glasses Today ──
+  glassesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+  },
+  glassesLabel: {
+    fontSize: 13,
+    color: COLORS.muted,
+  },
+  glassesCount: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginTop: 2,
+  },
+  logButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.accent,
+  },
+  logButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.accent,
   },
 });
